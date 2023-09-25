@@ -1,0 +1,19 @@
+{
+  "productId": 1001,
+  "name": "caixa",
+  "weight": 0,
+  "recommendations": [
+    {
+      "author": "fabricio",
+      "rate": 3,
+      "content": "caixa muito boa"
+    }
+  ],
+  "reviews": [
+    {
+      "author": "lucas",
+      "subject": "boa",
+      "content": "muito resistente"
+    }
+  ]
+}F
