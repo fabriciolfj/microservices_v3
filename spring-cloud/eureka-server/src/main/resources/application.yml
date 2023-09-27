@@ -16,6 +16,10 @@ eureka:
 
 management.endpoints.web.exposure.include: "*"
 
+app:
+  eureka-username: u
+  eureka-password: p
+
 
 ---
 spring.config.activate.on-profile: docker

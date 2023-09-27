@@ -28,3 +28,16 @@
 - nele possui dados do usuário, como login, email e etc
 - além de ser assinado digitalmente
 - para validar a assinatura, os apps protegidos pegam a chave público do authorization server que emitiu o token
+
+
+## oauth2 configuração
+- as authorities precisam ser especificados com SCOPE_alguma coisa, por convenção no oauth2
+- para o exemplo deste projeto, afim de solicitar um token fica authorization code, chame a rl https://localhost:8443/oauth2/authorize?response_type=code&client_id=reader&redirect_uri=https://my.redirect.uri&scope=product:read&state=35725
+- com o resultado code, insira no script abaixo:
+```
+curl -k https://reader:secret-reader@localhost:8443/oauth2/token -d grant_type=authorization_code -d client_id=reader -d redirect_uri=https://my.redirect.uri -d code=$CODE -s | jq
+```
+- para solicitar um token, via client credentials (quando usamos para autenticação entre aplicações), execute o script abaixo:
+```
+curl -k https://writer:secret-writer@localhost:8443/oauth2/token -d grant_type=client_credentials -d scope="product:read product:write" -s | jq
+```
