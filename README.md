@@ -41,3 +41,15 @@ curl -k https://reader:secret-reader@localhost:8443/oauth2/token -d grant_type=a
 ```
 curl -k https://writer:secret-writer@localhost:8443/oauth2/token -d grant_type=client_credentials -d scope="product:read product:write" -s | jq
 ```
+
+## docker-compose
+- caso queira utilizar valores para variaveis de ambiente, dentro do docker-compose, 
+- coloque em um arquivo de nome .env, no local aonde encontra-se o arquivo docker-compose.yml
+
+## config server
+- para buscar as configurações de um microservice e perfil específico:
+```
+curl https://dev-usr:dev-pwd@localhost:8443/config/product/docker -ks | jq .
+```
+
+## Criptografando e descriptografando informações confidenciais
