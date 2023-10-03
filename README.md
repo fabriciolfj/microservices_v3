@@ -53,3 +53,47 @@ curl https://dev-usr:dev-pwd@localhost:8443/config/product/docker -ks | jq .
 ```
 
 ## Criptografando e descriptografando informações confidenciais
+- o servidor de configuração expõe o endpoint /encrypt e /decrypt, para encriptar dado ou descriptar
+- o dado encriptado pelo servidor de configuração, deve ser inserido com prefixo {cipher} e envolve-lo em ''
+- exemplo para encryptar uma informação:
+```
+curl -k https://dev-usr:dev-pwd@localhost:8443/config/encrypt --data-urlencode "hello world"
+
+curl -k https://dev-usr:dev-pwd@localhost:8443/config/decrypt -d d91001603dcdf3eb1392ccbd40ff201cdcf7b9af2fcaab3da39e37919033b206
+```
+
+## resilience4j
+- afim de melhorar a resiliencia das nossas apps, diante a erros na comunicação sincrona
+- alguns mecaninsmos:
+  - circuit breaker
+  - time limiter
+  - retry
+
+### resilience4j circuit breaker
+- as principais características de um disjuntor são as seguintes:
+  - se um disjuntor detectar muitas falhas, abrirá o circuito, ou seja, não permitirá novas chamadas
+  - com o circuito aberto, o disjuntor executará uma lógica fail-fast, ou seja, chamará o método fallback
+  - depois de um tempo, o disjuntor ficará semi aberto, permitindo novas chamadas, afim de verificar se o problema foi resolvido
+  - caso tenha sido resolvido, o ficará fechado ou manterá aberto.
+  - o resilience4j publica seus eventos no actuator/health e actuator/circuitbreakerevents.
+- algumas configurações do resilience4j:
+  - slidingWindowType: janela deslizante, afim de tomar decisão, em tempo ou contagem, para abrir o disjuntor
+  - slidingWindowSize: número de chamadas em um estado fechado, para determinar se deve abrir o disjuntor
+  - failureRateThreshold: limite em porcentagem, para chamdas com falha que causarão a abertura do circuito
+  - automaticTransitionFromOpenToHalfOpenEnabled: determina se o disjuntor fará a transição automática pra o estado semiaberto 
+  - waitDurationInOpenState: especifica o tempo que o circuito permanece aberto, antes de passar para o semi aberto.
+  - permittedNumberOfCallsInHalfOpenState: quantidade de chamadas no estado semi aberto, para determinar se a chamada irá para o aberto ou fechado (leva em consideração o percentual failureRateThreshold)
+  - ignoreExceptions: exceptions que não participam da contagem
+  - registerHealthIndicator: permite que o resilience4j preencha o endpoint actuator sobre seus disjuntores
+  - allowHealthIndicatorToFail: indica se deixará o componente como down ou up, caso o disjuntor esteja aberto
+  - management.health.circuitbreakers.enabled: true : adicionar informações de integridado do disjuntor
+  - timeoutDuration: tempo limite para retorno de uma chamada externa
+- retry:
+  - os eventos são inseridos no /actuator/retryevents
+  - maxAttempts: número de tentativas antes de desistir
+  - waitDuration: tempo de espera antes da próxima tentativa
+  - retryExceptions: uma lista de exceptions, que acionará uma nova tentativa (cuidade para não abrir o circuit breaker, antes de terminar as retentativas)
+
+### ponto importante do resilience4j
+- ponto importante e a ordem de precedência:
+  - Retry ( CircuitBreaker ( RateLimiter ( TimeLimiter ( Bulkhead ( Function ) ) ) ) )

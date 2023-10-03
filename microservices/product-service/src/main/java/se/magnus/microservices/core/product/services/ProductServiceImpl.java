@@ -16,71 +16,103 @@ import se.magnus.microservices.core.product.persistence.ProductEntity;
 import se.magnus.microservices.core.product.persistence.ProductRepository;
 import se.magnus.util.http.ServiceUtil;
 
+import java.time.Duration;
+import java.util.Random;
+
 @RestController
 public class ProductServiceImpl implements ProductService {
 
-  private static final Logger LOG = LoggerFactory.getLogger(ProductServiceImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ProductServiceImpl.class);
 
-  private final ServiceUtil serviceUtil;
+    private final Random randomNumberGenerator = new Random();
 
-  private final ProductRepository repository;
+    private final ServiceUtil serviceUtil;
 
-  private final ProductMapper mapper;
+    private final ProductRepository repository;
 
-  @Autowired
-  public ProductServiceImpl(ProductRepository repository, ProductMapper mapper, ServiceUtil serviceUtil) {
-    this.repository = repository;
-    this.mapper = mapper;
-    this.serviceUtil = serviceUtil;
-  }
+    private final ProductMapper mapper;
 
-  @Override
-  public Mono<Product> createProduct(Product body) {
-
-    if (body.getProductId() < 1) {
-      throw new InvalidInputException("Invalid productId: " + body.getProductId());
+    @Autowired
+    public ProductServiceImpl(ProductRepository repository, ProductMapper mapper, ServiceUtil serviceUtil) {
+        this.repository = repository;
+        this.mapper = mapper;
+        this.serviceUtil = serviceUtil;
     }
 
-    ProductEntity entity = mapper.apiToEntity(body);
-    Mono<Product> newEntity = repository.save(entity)
-      .log(LOG.getName(), FINE)
-      .onErrorMap(
-        DuplicateKeyException.class,
-        ex -> new InvalidInputException("Duplicate key, Product Id: " + body.getProductId()))
-      .map(e -> mapper.entityToApi(e));
+    @Override
+    public Mono<Product> createProduct(Product body) {
 
-    return newEntity;
-  }
+        if (body.getProductId() < 1) {
+            throw new InvalidInputException("Invalid productId: " + body.getProductId());
+        }
 
-  @Override
-  public Mono<Product> getProduct(int productId) {
+        ProductEntity entity = mapper.apiToEntity(body);
+        Mono<Product> newEntity = repository.save(entity)
+                .log(LOG.getName(), FINE)
+                .onErrorMap(
+                        DuplicateKeyException.class,
+                        ex -> new InvalidInputException("Duplicate key, Product Id: " + body.getProductId()))
+                .map(e -> mapper.entityToApi(e));
 
-    if (productId < 1) {
-      throw new InvalidInputException("Invalid productId: " + productId);
+        return newEntity;
     }
 
-    LOG.info("Will get product info for id={}", productId);
+    @Override
+    public Mono<Product> getProduct(int productId, int delay, int faultPercent) {
 
-    return repository.findByProductId(productId)
-      .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
-      .log(LOG.getName(), FINE)
-      .map(e -> mapper.entityToApi(e))
-      .map(e -> setServiceAddress(e));
-  }
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
 
-  @Override
-  public Mono<Void> deleteProduct(int productId) {
+        LOG.info("Will get product info for id={}", productId);
 
-    if (productId < 1) {
-      throw new InvalidInputException("Invalid productId: " + productId);
+        return repository.findByProductId(productId)
+                .switchIfEmpty(Mono.error(new NotFoundException("No product found for productId: " + productId)))
+                .map(e -> throwErrorIfBadLuck(e, faultPercent))
+                .delayElement(Duration.ofSeconds(delay))
+                .log(LOG.getName(), FINE)
+                .map(e -> mapper.entityToApi(e))
+                .map(e -> setServiceAddress(e));
     }
 
-    LOG.debug("deleteProduct: tries to delete an entity with productId: {}", productId);
-    return repository.findByProductId(productId).log(LOG.getName(), FINE).map(e -> repository.delete(e)).flatMap(e -> e);
-  }
+    @Override
+    public Mono<Void> deleteProduct(int productId) {
 
-  private Product setServiceAddress(Product e) {
-    e.setServiceAddress(serviceUtil.getServiceAddress());
-    return e;
-  }
+        if (productId < 1) {
+            throw new InvalidInputException("Invalid productId: " + productId);
+        }
+
+        LOG.debug("deleteProduct: tries to delete an entity with productId: {}", productId);
+        return repository.findByProductId(productId).log(LOG.getName(), FINE).map(e -> repository.delete(e)).flatMap(e -> e);
+    }
+
+    private Product setServiceAddress(Product e) {
+        e.setServiceAddress(serviceUtil.getServiceAddress());
+        return e;
+    }
+
+    private ProductEntity throwErrorIfBadLuck(ProductEntity entity, int faultPercent) {
+        if (faultPercent == 0) {
+            return entity;
+        }
+
+        int randomThreshold = getRandomNumber(1, 100);
+        if (faultPercent < randomThreshold) {
+            LOG.debug("We got lucky, no error occurred, {} < {}",
+                    faultPercent, randomThreshold);
+            return entity;
+
+        }
+
+        LOG.info("Bad luck, an error occurred, {} >= {}", faultPercent, randomThreshold);
+        throw new RuntimeException("Something went wrong...");
+    }
+
+    private int getRandomNumber(int min, int max) {
+        if (max < min) {
+            throw new IllegalArgumentException("Max must be greater than min");
+        }
+
+        return randomNumberGenerator.nextInt((max - min) + 1) + min;
+    }
 }

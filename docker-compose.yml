@@ -47,6 +47,8 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - CONFIG_SERVER_USR=${CONFIG_SERVER_USR}
       - CONFIG_SERVER_PWD=${CONFIG_SERVER_PWD}
+    ports:
+      - 8080:8080
     depends_on:
       rabbitmq:
         condition: service_healthy
