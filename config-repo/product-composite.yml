@@ -99,8 +99,8 @@ spring.security.oauth2.resourceserver.jwt.issuer-uri: http://${app.auth-server}:
 logging:
   level:
     root: INFO
-    se.magnus: DEBUG
-    org.springframework.web.server.adapter.HttpWebHandlerAdapter: TRACE
+    se.magnus: INFO
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: INFO
 
 resilience4j.timelimiter:
   instances:
@@ -130,6 +130,8 @@ resilience4j.retry:
       retryExceptions:
         - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
 
+spring.codec.log-request-details: true
+logging.level.org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE
 ---
 spring.config.activate.on-profile: docker
 

@@ -97,3 +97,40 @@ curl -k https://dev-usr:dev-pwd@localhost:8443/config/decrypt -d d91001603dcdf3e
 ### ponto importante do resilience4j
 - ponto importante e a ordem de precedência:
   - Retry ( CircuitBreaker ( RateLimiter ( TimeLimiter ( Bulkhead ( Function ) ) ) ) )
+
+## Rastreamento ou tracing
+- mecanismo de ver o caminho de processos executados na nossa aplicação, sejam eles via http, mensageria e etc.
+- ele é composto por trace (fluxo completo) e spans (cada etapa do fluxo ou chamada)
+- em termos de codigo, o rastreamento se parece com este:
+  - traceparent:"00-2425f26083814f66c985c717a761e810-fbec8704028cfb20-01" 
+```
+00, indica a versão usada. Sempre será “ 00" usando a especificação atual.
+124…810, é o ID de rastreamento.
+fbe…b20é o ID do intervalo.
+01, a última parte, contém vários sinalizadores. 
+O único sinalizador suportado pela especificação atual é um 
+sinalizador chamado sampled, com o valor 01. Isso significa 
+que o chamador está gravando os dados de rastreamento dessa 
+solicitação. Configuraremos nossos microsserviços para 
+registrar dados de rastreamento para todas as solicitações, portanto, esse sinalizador sempre terá o valor de 01.
+```
+- para rastreamentos personalizados, consulte: https://micrometer.io/docs/observation
+- configuração basica:
+```
+management.zipkin.tracing.endpoint: http://zipkin:9411/api/v2/spans
+management.tracing.sampling.probability: 1.0
+```
+- no momento a api micrometer se não se da bem com reactor, para contornar devemos fazer uso:
+```
+ Hooks.enableAutomaticContextPropagation(); no método main do app
+```
+- para webclient, devemos adicionar a function:
+````
+  @Autowired
+  private ReactorLoadBalancerExchangeFilterFunction lbFunction;
+
+  @Bean
+  public WebClient webClient(WebClient.Builder builder) {
+    return builder.filter(lbFunction).build();
+  }
+````
