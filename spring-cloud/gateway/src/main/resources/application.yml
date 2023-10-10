@@ -15,3 +15,4 @@ spring:
 ---
 spring.config.activate.on-profile: docker
 spring.cloud.config.uri: http://config-server:8888
+server.port: 80

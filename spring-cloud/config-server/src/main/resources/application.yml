@@ -13,3 +13,4 @@ logging:
 ---
 spring.config.activate.on-profile: docker
 spring.cloud.config.server.native.searchLocations: file:/config-repo
+server.port: 80

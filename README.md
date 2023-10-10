@@ -134,3 +134,29 @@ management.tracing.sampling.probability: 1.0
     return builder.filter(lbFunction).build();
   }
 ````
+
+
+# Kubernetes
+
+## Suporte spring para desligamento 
+- graceful shutdown: o microservice para de aceitar novas solicitações e aguarda um tempo configurável para que as solicitações ativas sejam concluídas antes de encerrar o aplicativo
+```
+server.shutdown: graceful
+spring.lifecycle.timeout-per-shutdown-phase: 10s
+```
+
+- liveness e readiness probes: informa ao kubernetes se seu pod está pronto para aceitar solicitações. Podemos incluir no indicador de integridade, recursos que o ms utiliza, como mongodb e etc.
+```
+management.endpoint.health.probes.enabled: true
+management.endpoint.health.group.readiness.include: readinessState, rabbit, db, mongo
+#maiores detalhes consulte https://docs.spring.io/spring-boot/docs/3.0.4/reference/htmlsingle/#actuator.endpoints.kubernetes-probes
+```
+
+## Helm
+- gerenciador de pacotes
+- um pacote e conhecido como chart
+- chart contem modelos, valores padrão para os modelos e dependências opcionais
+- lib hart não contem nenhuma definição implantável, mas apenas modelos que devem ser usados por outros charts para manifestos kubernetes
+
+
+## Looking into a Helm chart

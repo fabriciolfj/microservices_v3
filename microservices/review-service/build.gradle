@@ -32,7 +32,6 @@ dependencies {
     implementation 'net.ttddyy.observation:datasource-micrometer-spring-boot:1.0.0'
     implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
     implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
-    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     implementation 'com.mysql:mysql-connector-j'
     implementation "org.mapstruct:mapstruct:${mapstructVersion}"
     implementation 'org.springframework.cloud:spring-cloud-starter-config'
