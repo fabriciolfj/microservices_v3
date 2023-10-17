@@ -1,11 +1,5 @@
 package se.magnus.microservices.composite.product;
 
-import static java.util.Collections.singletonList;
-import static org.mockito.Mockito.when;
-import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
-import static org.springframework.http.HttpStatus.*;
-import static org.springframework.http.MediaType.APPLICATION_JSON;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,13 +16,21 @@ import se.magnus.api.exceptions.InvalidInputException;
 import se.magnus.api.exceptions.NotFoundException;
 import se.magnus.microservices.composite.product.services.ProductCompositeIntegration;
 
+import static java.util.Collections.singletonList;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.when;
+import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
+import static org.springframework.http.HttpStatus.*;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+
 @SpringBootTest(
   webEnvironment = RANDOM_PORT,
   classes = {TestSecurityConfig.class},
   properties = {
     "spring.security.oauth2.resourceserver.jwt.issuer-uri=",
     "spring.main.allow-bean-definition-overriding=true",
-    "eureka.client.enabled=false",  "spring.cloud.config.enabled=false"})
+    "spring.cloud.config.enabled=false"})
 class ProductCompositeServiceApplicationTests {
 
   private static final int PRODUCT_ID_OK = 1;
@@ -44,7 +46,7 @@ class ProductCompositeServiceApplicationTests {
   @BeforeEach
   void setUp() {
 
-    when(compositeIntegration.getProduct(PRODUCT_ID_OK, 0, 0))
+    when(compositeIntegration.getProduct(eq(PRODUCT_ID_OK), anyInt(), anyInt()))
       .thenReturn(Mono.just(new Product(PRODUCT_ID_OK, "name", 1, "mock-address")));
 
     when(compositeIntegration.getRecommendations(PRODUCT_ID_OK))
@@ -53,9 +55,9 @@ class ProductCompositeServiceApplicationTests {
     when(compositeIntegration.getReviews(PRODUCT_ID_OK))
       .thenReturn(Flux.fromIterable(singletonList(new Review(PRODUCT_ID_OK, 1, "author", "subject", "content", "mock address"))));
 
-    when(compositeIntegration.getProduct(PRODUCT_ID_NOT_FOUND, 0, 0)).thenThrow(new NotFoundException("NOT FOUND: " + PRODUCT_ID_NOT_FOUND));
+    when(compositeIntegration.getProduct(eq(PRODUCT_ID_NOT_FOUND), anyInt(), anyInt())).thenThrow(new NotFoundException("NOT FOUND: " + PRODUCT_ID_NOT_FOUND));
 
-    when(compositeIntegration.getProduct(PRODUCT_ID_INVALID, 0, 0)).thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_INVALID));
+    when(compositeIntegration.getProduct(eq(PRODUCT_ID_INVALID), anyInt(), anyInt())).thenThrow(new InvalidInputException("INVALID: " + PRODUCT_ID_INVALID));
   }
 
   @Test

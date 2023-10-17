@@ -1,17 +1,17 @@
 package se.magnus.microservices.composite.product;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.Test;
+import se.magnus.api.core.product.Product;
+import se.magnus.api.event.Event;
+
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static se.magnus.api.event.Event.Type.CREATE;
 import static se.magnus.api.event.Event.Type.DELETE;
 import static se.magnus.microservices.composite.product.IsSameEvent.sameEventExceptCreatedAt;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.Test;
-import se.magnus.api.core.product.Product;
-import se.magnus.api.event.Event;
 
 class IsSameEventTests {
 
