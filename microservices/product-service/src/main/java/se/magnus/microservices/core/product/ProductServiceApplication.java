@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -21,16 +20,15 @@ import reactor.core.publisher.Hooks;
 import se.magnus.microservices.core.product.persistence.ProductEntity;
 
 @SpringBootApplication
-@EnableDiscoveryClient
 @ComponentScan("se.magnus")
 public class ProductServiceApplication {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProductServiceApplication.class);
 
   public static void main(String[] args) {
+    Hooks.enableAutomaticContextPropagation();
     ConfigurableApplicationContext ctx = SpringApplication.run(ProductServiceApplication.class, args);
 
-    Hooks.enableAutomaticContextPropagation();
     String mongodDbHost = ctx.getEnvironment().getProperty("spring.data.mongodb.host");
     String mongodDbPort = ctx.getEnvironment().getProperty("spring.data.mongodb.port");
     LOG.info("Connected to MongoDb: " + mongodDbHost + ":" + mongodDbPort);

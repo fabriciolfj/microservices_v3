@@ -57,11 +57,11 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
 
   @Autowired
   public ProductCompositeIntegration(
-          @Qualifier("publishEventScheduler") Scheduler publishEventScheduler,
-          WebClient webClient,
-          ObjectMapper mapper,
-          StreamBridge streamBridge,
-          ServiceUtil serviceUtil
+    @Qualifier("publishEventScheduler") Scheduler publishEventScheduler,
+    WebClient webClient,
+    ObjectMapper mapper,
+    StreamBridge streamBridge,
+    ServiceUtil serviceUtil
   ) {
     this.webClient = webClient;
 
@@ -87,18 +87,18 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
   public Mono<Product> getProduct(int productId, int delay, int faultPercent) {
 
     URI url = UriComponentsBuilder.fromUriString(PRODUCT_SERVICE_URL
-            + "/product/{productId}?delay={delay}&faultPercent={faultPercent}").build(productId, delay, faultPercent);
+      + "/product/{productId}?delay={delay}&faultPercent={faultPercent}").build(productId, delay, faultPercent);
     LOG.debug("Will call the getProduct API on URL: {}", url);
 
     return webClient.get().uri(url)
-            .retrieve().bodyToMono(Product.class).log(LOG.getName(), FINE)
-            .onErrorMap(WebClientResponseException.class, ex -> handleException(ex));
+      .retrieve().bodyToMono(Product.class).log(LOG.getName(), FINE)
+      .onErrorMap(WebClientResponseException.class, ex -> handleException(ex));
   }
 
   private Mono<Product> getProductFallbackValue(int productId, int delay, int faultPercent, CallNotPermittedException ex) {
 
     LOG.warn("Creating a fail-fast fallback product for productId = {}, delay = {}, faultPercent = {} and exception = {} ",
-            productId, delay, faultPercent, ex.toString());
+      productId, delay, faultPercent, ex.toString());
 
     if (productId == 13) {
       String errMsg = "Product Id: " + productId + " not found in fallback cache!";
@@ -113,7 +113,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
   public Mono<Void> deleteProduct(int productId) {
 
     return Mono.fromRunnable(() -> sendMessage("products-out-0", new Event(DELETE, productId, null)))
-            .subscribeOn(publishEventScheduler).then();
+      .subscribeOn(publishEventScheduler).then();
   }
 
   @Override
@@ -140,7 +140,7 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
   public Mono<Void> deleteRecommendations(int productId) {
 
     return Mono.fromRunnable(() -> sendMessage("recommendations-out-0", new Event(DELETE, productId, null)))
-            .subscribeOn(publishEventScheduler).then();
+      .subscribeOn(publishEventScheduler).then();
   }
 
   @Override
@@ -167,14 +167,14 @@ public class ProductCompositeIntegration implements ProductService, Recommendati
   public Mono<Void> deleteReviews(int productId) {
 
     return Mono.fromRunnable(() -> sendMessage("reviews-out-0", new Event(DELETE, productId, null)))
-            .subscribeOn(publishEventScheduler).then();
+      .subscribeOn(publishEventScheduler).then();
   }
 
   private void sendMessage(String bindingName, Event event) {
     LOG.debug("Sending a {} message to {}", event.getEventType(), bindingName);
     Message message = MessageBuilder.withPayload(event)
-            .setHeader("partitionKey", event.getKey())
-            .build();
+      .setHeader("partitionKey", event.getKey())
+      .build();
     streamBridge.send(bindingName, message);
   }
 
