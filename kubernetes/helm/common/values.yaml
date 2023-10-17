@@ -1,7 +1,7 @@
 replicaCount: 1
 
 image:
-  repository: fabricio211
+  repository: hands-on
   tag: latest
   pullPolicy: Never
   args: []

@@ -160,3 +160,33 @@ management.endpoint.health.group.readiness.include: readinessState, rabbit, db, 
 
 
 ## Looking into a Helm chart
+- no helm temos a seguinte estrutura?
+  - chart.yaml  (informações  sobre o chart e se depende de outros charts)
+  - templates, pasta que contém os modelos de uso
+  - Chart.lock, para solução de dependencias, rastreio ate aonde implantou o chart
+  - .helmignore, similar ao .ignore do git
+- alguns modelos para passagem de valores para o chart:
+  - Values: usado para se referir a valores no values.yamlarquivo do gráfico ou valores fornecidos ao executar um Helmcomando como install.
+  - Release: usado para fornecer metadados relativos à versão atual instalada. Ele contém campos como:
+    - Name: O nome do lançamento
+    - Namespace: O nome do namespace onde a instalação é executada
+    - Service: O nome do Serviço de instalação, sempre retornandoHelm
+  - Chart: Usado para acessar informações do Chart.yamlarquivo. Exemplos de campos que podem ser úteis para fornecer metadados para uma implantação são:
+    - Name: O nome do gráfico
+    - Version: o número da versão do gráfico
+  - Files: Contém funções para acessar arquivos específicos do gráfico. Neste capítulo, usaremos as duas funções a seguir no Filesobjeto:
+    - Glob: Retorna arquivos em um gráficobaseado em um padrão glob . Por exemplo, o padrão "config-repo/*"retornará todos os arquivos encontrados na pastaconfig-repo
+    - AsConfig: Retorna o conteúdo dos arquivos como um mapa YAML apropriado para declarar valores em umConfigMap
+  - Capabilities: pode ser usado para localizar informações sobre os recursos do cluster Kubernetes no qual a instalação é executada.
+- para modelos nomeados, que serão usados por outros modelos, não para criar um manifesto em si, devem iniciaro nome com sublinhado _
+- o helm podemos utilizar algumas funções, como:
+  - {{ (.Files.Glob "config-repo/*").AsConfig | indent 2 }}, no caso pega os arquivos do config-repo, formata do jeito yaml, com recuso de 2 espaços
+- alguns comandos do helm, para ver a saida dos charts, usando os dados do values:
+````
+helm dependency update components/gateway
+helm template components/gateway -s templates/service.yaml
+````
+- alguns comandos uteis, para ver as imagens geradas e implantadas
+````
+ kubectl get pods -o json | jq .items[].spec.containers[].image
+````

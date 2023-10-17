@@ -56,6 +56,8 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
+import static org.springframework.http.HttpMethod.*;
+
 /**
  * @author Joe Grandja
  * @since 0.0.1
@@ -156,7 +158,7 @@ public class AuthorizationServerConfig {
 
   @Bean
   public AuthorizationServerSettings authorizationServerSettings() {
-    return AuthorizationServerSettings.builder().issuer("http://auth-server:9999").build();
+    return AuthorizationServerSettings.builder().issuer("http://auth-server").build();
   }
 
   private Consumer<List<AuthenticationProvider>> configureAuthenticationValidator() {
