@@ -190,3 +190,20 @@ helm template components/gateway -s templates/service.yaml
 ````
  kubectl get pods -o json | jq .items[].spec.containers[].image
 ````
+## atenção
+
+- um ponto de atenção, nesse projeto temos o chart pai que está na pasta environment, charts filhos que são os componentes
+- a estrutura do helm funciona da seguinte forma:
+  -  na pasta environment, temos:
+    - o values, com dados do ambiente
+    - charts, dependencias de outros charts (que podemos fazer uso do values tambem)
+    - templates, referenciando os templates que que faram uso dos values
+  - na pasta componentes, seguem de forma similar:
+    - o arquivo chart, referenciando outros charts que serão utilizados (que podem fazer uso do values tambem)
+    - values, com valor de cada componente, esse values são utilizados nos templates referenciados, na pasta template
+    - charts, as dependencias
+
+## cert manager
+- é um controlador de gerenciamento de certificados no kubernetes
+- ele pode gerar certificado que são provisionados quando o ingress (que o referencia) é criado (se o ingress tiver referencia)
+- novo local do swagger: https://minikube.me/openapi/webjars/swagger-ui/index.html#/
