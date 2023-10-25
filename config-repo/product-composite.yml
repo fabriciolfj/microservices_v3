@@ -9,7 +9,8 @@ springdoc:
     oauth2-redirect-url: /swagger-ui/oauth2-redirect.html
     oauth:
       clientId: writer
-      clientSecret: '{cipher}debb77857798ba70441b229de88624213b0a00b284f95fe31d1378d117cf3ffa'
+      # TODO: EXTERNALIZE!
+      clientSecret: secret-writer
       useBasicAuthenticationWithAccessCodeGrant: true
   oAuthFlow:
     authorizationUrl: https://localhost:8443/oauth2/authorize
@@ -78,6 +79,8 @@ api:
 server.port: 7000
 server.error.include-message: always
 
+spring.application.name: product-composite
+
 spring.cloud.stream:
   default.contentType: application/json
   bindings:
@@ -96,17 +99,21 @@ spring.cloud.stream:
 
 spring.security.oauth2.resourceserver.jwt.issuer-uri: http://${app.auth-server}
 
-logging:
-  level:
-    root: INFO
-    se.magnus: INFO
-    org.springframework.web.server.adapter.HttpWebHandlerAdapter: INFO
-
 resilience4j.timelimiter:
   instances:
     product:
       timeoutDuration: 2s
+
+resilience4j.retry:
+  instances:
+    product:
+      maxAttempts: 3
+      waitDuration: 1000
+      retryExceptions:
+      - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+
 management.health.circuitbreakers.enabled: true
+
 resilience4j.circuitbreaker:
   instances:
     product:
@@ -122,20 +129,20 @@ resilience4j.circuitbreaker:
         - se.magnus.api.exceptions.InvalidInputException
         - se.magnus.api.exceptions.NotFoundException
 
-resilience4j.retry:
-  instances:
-    product:
-      maxAttempts: 3
-      waitDuration: 1000
-      retryExceptions:
-        - org.springframework.web.reactive.function.client.WebClientResponseException$InternalServerError
+logging:
+  level:
+    root: INFO
+    se.magnus: INFO
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: INFO
 
-spring.codec.log-request-details: true
-logging.level.org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE
+# To see tracing headers, uncomment the following two lines and restart the product-composite service
+# spring.codec.log-request-details: true
+# logging.level.org.springframework.web.reactive.function.client.ExchangeFunctions: TRACE
+
 ---
 spring.config.activate.on-profile: docker
 
-server.port: 8080
+server.port: 80
 
 ---
 spring.config.activate.on-profile: streaming_partitioned
@@ -151,3 +158,12 @@ spring.cloud.stream.bindings.recommendations-out-0.producer:
 spring.cloud.stream.bindings.reviews-out-0.producer:
   partition-key-expression: headers['partitionKey']
   partition-count: 2
+
+---
+spring.config.activate.on-profile: prod
+
+logging:
+  level:
+    root: WARN
+    se.magnus: WARN
+    org.springframework.web.server.adapter.HttpWebHandlerAdapter: WARN

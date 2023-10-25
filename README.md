@@ -202,8 +202,82 @@ helm template components/gateway -s templates/service.yaml
     - o arquivo chart, referenciando outros charts que serão utilizados (que podem fazer uso do values tambem)
     - values, com valor de cada componente, esse values são utilizados nos templates referenciados, na pasta template
     - charts, as dependencias
+  - mesmo se aplica a pasta commons, 
+- a prioridade vem da pasta environments -> components -> commons
 
 ## cert manager
 - é um controlador de gerenciamento de certificados no kubernetes
 - ele pode gerar certificado que são provisionados quando o ingress (que o referencia) é criado (se o ingress tiver referencia)
 - novo local do swagger: https://minikube.me/openapi/webjars/swagger-ui/index.html#/
+
+## service mesh
+- é uma camada de infraestrutura que controla e observa a comunicação entre serviços
+- algumas capacidades:
+  - observabilidade
+  - segurança
+  - aplicação de politicas
+  - resiliência
+  - gerenciamento de tráfego
+- um componente importante no service mesh, é o proxy leve, que é injetado a cada pod do microservice, executando a função de sidecar
+- nesse projeto usaremos o istio, ele ja faz uso de outros projetos de código aberto, como prometheus, grafana, jaeger e kiali
+
+### recursos do istio
+- gateway -> usado para lidar com a entrada e saída de dados do service mesh
+  - um gateway depende de um virtual service para direcionar o tráfego de entrada ao services do k8s (esse recurso substitui o ingress)
+  - tem algumas vantagens sobre o ingress, como: reporta telemetria, faz authenticação e autorização, possui roteamente mais refinado
+- virtual service -> usado para definir regras de roteamento
+- destinarion rule -> usado para definir políticas e regras para o tráfego que é roteado pelo virtual service, para um serviço específico (um destino)
+  - por exemplo: usar criptografia
+- PeerAuthentication -> usado para controlar a autenticação serviço a serviçop da malha
+- requestAuthentication -> usado para atenticar usuários finais, fazendo uso do jwt (configuraremos o istio para utilizar o authorization-server)
+- authorizationPolicy -> usaod para fornecer controle de acesso no istio
+- para instalar o istio dentro do cluster, usaremos demo (não é indicado para produção, pois faz uso de recursos minímos)
+```
+istioctl install --skip-confirmation \
+  --set profile=demo \
+  --set meshConfig.accessLogFile=/dev/stdout \
+  --set meshConfig.accessLogEncoding=JSON \ - para conseguirmos ver os logs dos proxies no pods
+  --set values.pilot.env.PILOT_JWT_PUB_KEY_REFRESH_INTERVAL=15s \ - renovar o token a cada 15s
+  -f kubernetes/istio-tracing.yml - permite a criação de intervalos de rastreamento usados para o rastreamento distribuído
+```
+- instalando recursos extras
+```
+istio_version=$(istioctl version --short --remote=false)
+echo "Installing integrations for Istio v$istio_version"
+kubectl apply -n istio-system -f https://raw.githubusercontent.com/istio/istio/${istio_version}/samples/addons/kiali.yaml
+kubectl apply -n istio-system -f https://raw.githubusercontent.com/istio/istio/${istio_version}/samples/addons/jaeger.yaml
+kubectl apply -n istio-system -f https://raw.githubusercontent.com/istio/istio/${istio_version}/samples/addons/prometheus.yaml
+kubectl apply -n istio-system -f https://raw.githubusercontent.com/istio/istio/${istio_version}/samples/addons/grafana.yaml
+```
+
+### problemas de conectividade para uso no minikube
+- o gwt do istio faz uso de um serviço do k8s com load balance
+- para acessar o gwt, precisamos executar um balanceador de carga na frente do k8s
+- para simular um loadbalance com minikube, executaremos o comando minikube tunnel
+
+### configurando o istio neste projeto
+- em helm/environments/istio-system, configuração para acessar externamento os recursos e configuração do certifica para requisição https
+- no certificado está configurado para os dns dos recursos extrados e do microservice
+- modelo helm/common/_istio_base.yaml, possui alguns manifestos, como:
+  - gwt e virtual service, o gwt recebe a entrada da requisição para o host minikube.me e health.minikube.me e o vs faz o roteamento para service correspondente
+- modelo helm/common/_istio_dr_mutual_tls.yaml, possui o DestinationRule, especificando o uso de mTls e subsets para deploy com inatividade 0
+ -  apenas em prod usamos o subsets para versionamento, onde podemos ir trocando aos poucos pelos pods novos, sem deixar o sistema inativo
+- execute as etapadas abaixo:
+  - o script sh build-apps.sh
+  - minikube tunnel em outra janela no terminal 
+  - pegue o ip externo kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}' ou
+```
+INGRESS_IP=$(kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+echo $INGRESS_IP
+MINIKUBE_HOSTS="minikube.me grafana.minikube.me kiali.minikube.me prometheus.minikube.me tracing.minikube.me kibana.minikube.me elasticsearch.minikube.me mail.minikube.me health.minikube.me"
+echo "$INGRESS_IP $MINIKUBE_HOSTS" | sudo tee -a /etc/hosts
+```
+- para validar se a configuração ocorreu corretamente
+```
+curl -o /dev/null -sk -L -w "%{http_code}\n" https://kiali.minikube.me/kiali/
+curl -o /dev/null -sk -L -w "%{http_code}\n" https://tracing.minikube.me
+curl -o /dev/null -sk -L -w "%{http_code}\n" https://grafana.minikube.me
+curl -o /dev/null -sk -L -w "%{http_code}\n" https://prometheus.minikube.me/graph#/
+```
+
+- cont Executando comandos para criar a malha de serviço

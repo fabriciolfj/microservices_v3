@@ -56,8 +56,6 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 
-import static org.springframework.http.HttpMethod.*;
-
 /**
  * @author Joe Grandja
  * @since 0.0.1
