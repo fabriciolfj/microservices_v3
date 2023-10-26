@@ -9,6 +9,7 @@ spec:
   - {}
   selector:
     matchLabels:
+      # ao allow diz que nao aplicara nenhuma regra de autorizacao no ms abaixo
       app.kubernetes.io/name: product-composite
 ---
 apiVersion: security.istio.io/v1beta1
@@ -30,6 +31,7 @@ spec:
     jwksUri: http://auth-server.hands-on.svc.cluster.local/oauth2/jwks
   selector:
     matchLabels:
+      #encaminhara o token pra ca
       app.kubernetes.io/name: product-composite
 ---
 apiVersion: networking.istio.io/v1beta1

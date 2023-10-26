@@ -4,6 +4,10 @@
   - spring gateway
   - resilience4j para circuit breaker
   - micrometer para uso de trace (openTelemetry)
+```
+implementation 'io.micrometer:micrometer-tracing-bridge-brave'
+implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+```
   - eureka para server discovery
   - oauth2
   - spring load balance
@@ -209,6 +213,35 @@ helm template components/gateway -s templates/service.yaml
 - é um controlador de gerenciamento de certificados no kubernetes
 - ele pode gerar certificado que são provisionados quando o ingress (que o referencia) é criado (se o ingress tiver referencia)
 - novo local do swagger: https://minikube.me/openapi/webjars/swagger-ui/index.html#/
+- no exemplo abaaixo usamos o ca autoassinada (certificado autoassinado, ou seja emissor do certificado)
+```
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: selfsigned-issuer
+spec:
+  selfSigned: {}
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: ca-cert
+spec:
+  isCA: true
+  commonName: hands-on-ca
+  secretName: ca-secret
+  issuerRef:
+    name: selfsigned-issuer
+---
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: ca-issuer
+spec:
+  ca:
+    secretName: ca-secret
+```
+- arquivo hands-on-certificate.yaml, faz uso da configuração criada acima
 
 ## service mesh
 - é uma camada de infraestrutura que controla e observa a comunicação entre serviços
@@ -281,3 +314,42 @@ curl -o /dev/null -sk -L -w "%{http_code}\n" https://prometheus.minikube.me/grap
 ```
 
 - cont Executando comandos para criar a malha de serviço
+
+## siege para testes de carta
+```
+ACCESS_TOKEN=$(curl https://writer:secret-writer@minikube.me/oauth2/token -d grant_type=client_credentials -d scope="product:read product:write" -ks | jq .access_token -r)
+echo ACCESS_TOKEN=$ACCESS_TOKEN
+siege https://minikube.me/product-composite/1 -H "Authorization: Bearer $ACCESS_TOKEN" -c1 -d1 -v
+```
+
+## autorização e autenticação istio
+- as configurações deste projeto, fará uso do nosso ms authorization-server
+
+## mtls istio
+- autenticação mútua
+- a identidade do serviço e cliente são comprovadas, ou seja, o serviço prova sua identidade e o cliente também
+- do lado do serviço
+```
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+spec:
+  mtls:
+    mode: PERMISSIVE
+```
+- client
+```
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: {{ $dr.name }}
+spec:
+  host: //omitido
+    tls:
+      mode: ISTIO_MUTUAL //aqui
+```
+
+## atualizações sem tempo de inatividade no istio
+- canario: pedemos colocar um percentual de usuários para a nova versão e ir tombando os demais conforme o sucesso dela
+- blue-green: deixamos um percentual de usuarios para a nova versão, e gradualmente os demais vão migrando para ela
