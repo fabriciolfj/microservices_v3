@@ -353,3 +353,30 @@ spec:
 ## atualizações sem tempo de inatividade no istio
 - canario: pedemos colocar um percentual de usuários para a nova versão e ir tombando os demais conforme o sucesso dela
 - blue-green: deixamos um percentual de usuarios para a nova versão, e gradualmente os demais vão migrando para ela
+
+## EFK
+- elasticsearch -> bancos de dados distribuido
+- fluentId -> coletor de dados, dividi-se em 3 partes:
+  - source: origem da informação, no nosso caso logs dentro dos containers
+  - filtro: para transformar/processar o log, extraindo partes interessantes do mesmo
+  - match: para onde enviar os logs
+- kibana -> frontend do elasticsearch
+
+### exemplo configuração match 
+```
+   <match kubernetes.**istio**>
+      @type rewrite_tag_filter
+      <rule>
+        key log
+        pattern ^(.*)$
+        tag istio.${tag}
+      </rule>
+    </match>
+
+O <match>elemento corresponde a qualquer tag que siga o kubernetes.**istio**padrão, ou seja, tags que começam com Kubernetese depois contêm a palavra istioem algum lugar do nome da tag. istiopode vir do nome do namespace ou dorecipiente; ambos fazem parte da tag.
+O <match>elemento contém apenas um <rule>elemento, que prefixa a tag com istio. A ${tag}variável contém o valor atual da tag.
+Como este é o único <rule>elemento no <match>elemento, ele é configurado para corresponder a todos os registros de log.
+Como todos os registros de log provenientes do Kubernetes possuem um logcampo, o keycampo é definido como log, ou seja, a regra procura um logcampo nos registros de log.
+Para corresponder a qualquer string no logcampo, o patterncampo é definido como a ^(.*)$expressão regular. ^marca o início de uma string, enquanto $marca o final de uma string. (.*)corresponde a qualquer número de caracteres, exceto quebras de linha.
+Os registros de log são reemitidos para o mecanismo de roteamento Fluentd. Como nenhum outro elemento no arquivo de configuração corresponde às tags que começam com istio, os registros de log serão enviados diretamente para o elemento de saída do Elasticsearch, que é definido no fluent.confarquivo que descrevemos anteriormente.
+``
