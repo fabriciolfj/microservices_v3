@@ -96,7 +96,7 @@ curl -k https://dev-usr:dev-pwd@localhost:8443/config/decrypt -d d91001603dcdf3e
   - os eventos são inseridos no /actuator/retryevents
   - maxAttempts: número de tentativas antes de desistir
   - waitDuration: tempo de espera antes da próxima tentativa
-  - retryExceptions: uma lista de exceptions, que acionará uma nova tentativa (cuidade para não abrir o circuit breaker, antes de terminar as retentativas)
+  - retryExceptions: uma lista de exceptions, que acionará uma nova tentativa (cuidado para não abrir o circuit breaker, antes de terminar as retentativas)
 
 ### ponto importante do resilience4j
 - ponto importante e a ordem de precedência:
@@ -379,4 +379,10 @@ Como este é o único <rule>elemento no <match>elemento, ele é configurado para
 Como todos os registros de log provenientes do Kubernetes possuem um logcampo, o keycampo é definido como log, ou seja, a regra procura um logcampo nos registros de log.
 Para corresponder a qualquer string no logcampo, o patterncampo é definido como a ^(.*)$expressão regular. ^marca o início de uma string, enquanto $marca o final de uma string. (.*)corresponde a qualquer número de caracteres, exceto quebras de linha.
 Os registros de log são reemitidos para o mecanismo de roteamento Fluentd. Como nenhum outro elemento no arquivo de configuração corresponde às tags que começam com istio, os registros de log serão enviados diretamente para o elemento de saída do Elasticsearch, que é definido no fluent.confarquivo que descrevemos anteriormente.
-``
+```
+
+## prometheus e grafana
+- prometheus -> armazena dados de série temporal, como métricas de desempenho.
+- grafana -> para visualizar métricas de desempenho
+- painel indicado para apps feitos em spring boot, rodando no k8s https://grafana.com/grafana/dashboards/11955-jvm-micrometer/
+- management.metrics.tags.application - configuração para colocar o nome da app na métrica

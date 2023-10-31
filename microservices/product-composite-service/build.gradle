@@ -35,6 +35,7 @@ dependencies {
     implementation 'org.springframework.cloud:spring-cloud-starter-stream-kafka'
     implementation 'io.micrometer:micrometer-tracing-bridge-brave'
     implementation 'io.zipkin.reporter2:zipkin-reporter-brave'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
     implementation 'org.springframework.retry:spring-retry'
     implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.0.2'
     implementation "io.github.resilience4j:resilience4j-spring-boot3:${resilience4jVersion}"

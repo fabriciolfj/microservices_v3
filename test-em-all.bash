@@ -259,7 +259,7 @@ fi
 
 waitForService curl -k $HEALTH_URL/actuator/health
 
-ACCESS_TOKEN=$(curl -k https://writer:secret-writer@$HOST:$PORT/oauth2/token -d grant_type=client_credentials -d scope="" -s | jq .access_token -r)
+ACCESS_TOKEN=$(curl -k https://writer:secret-writer@$HOST:$PORT/oauth2/token -d grant_type=client_credentials -d scope="product:read product:write" -s | jq .access_token -r)
 echo ACCESS_TOKEN=$ACCESS_TOKEN
 AUTH="-H \"Authorization: Bearer $ACCESS_TOKEN\""
 
@@ -321,6 +321,13 @@ then
   assertEqual "https://$HOST:$PORT" "$(echo $RESPONSE | jq -r '.servers[0].url')"
 fi
 assertCurl 200 "curl -ks  https://$HOST:$PORT/openapi/v3/api-docs.yaml"
+
+if [[ $USE_K8S == "true" ]]
+then
+  # Verify access to Prometheus formatted metrics
+  echo "Prometheus metrics tests"
+  assertCurl 200 "curl -ks https://health.minikube.me/actuator/prometheus"
+fi
 
 if [[ $SKIP_CB_TESTS == "false" ]]
 then

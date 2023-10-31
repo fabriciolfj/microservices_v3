@@ -13,5 +13,7 @@ helm template kubernetes/helm/environments/dev-env
 
 helm upgrade --install istio-hands-on-addons kubernetes/helm/environments/istio-system -n istio-system --wait
 kubectl apply -f kubernetes/hands-on-namespace.yml
+kubectl create ns logging
 
 helm install hands-on-dev-env  kubernetes/helm/environments/dev-env -n hands-on
+helm install logging kubernetes/helm/environments/logging -n logging
