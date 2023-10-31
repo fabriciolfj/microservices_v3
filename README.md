@@ -386,3 +386,11 @@ Os registros de log são reemitidos para o mecanismo de roteamento Fluentd. Como
 - grafana -> para visualizar métricas de desempenho
 - painel indicado para apps feitos em spring boot, rodando no k8s https://grafana.com/grafana/dashboards/11955-jvm-micrometer/
 - management.metrics.tags.application - configuração para colocar o nome da app na métrica
+- anotações necessárias no pod, para envio das métricas da app ao prometheus
+```
+annotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "4004"
+  prometheus.io/scheme: http
+  prometheus.io/path: "/actuator/prometheus"
+``
