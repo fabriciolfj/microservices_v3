@@ -2,7 +2,7 @@
 - este projeto faz uso da arquitetura de microservices utilizando no primeiro momento spring cloud / spring boot 3
 - abaixo os recursos para atender a arquitetura de microservices:
   - spring gateway
-  - resilience4j para circuit breaker
+  - resilience4j para circuit breaker 
   - micrometer para uso de trace (openTelemetry)
 ```
 implementation 'io.micrometer:micrometer-tracing-bridge-brave'
